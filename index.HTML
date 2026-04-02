@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Guru Pro - IPL 2026 Special</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #facc15;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --text-light: #f8fafc;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0f172a; margin: 0; padding-bottom: 100px; color: var(--text-light); }
+        
+        /* Top Bar */
+        .top-bar { background: #000; color: var(--accent); padding: 6px 15px; font-size: 11px; display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #334155; }
+
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 25px 20px; text-align: center; border-bottom: 3px solid var(--accent); position: relative; }
+        .logo { font-size: 32px; font-weight: 900; color: var(--accent); font-style: italic; letter-spacing: 2px; }
+        
+        .admin-login-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+
+        /* Tabs Navigation */
+        .tabs { display: flex; margin: 15px; gap: 5px; background: var(--secondary); padding: 5px; border-radius: 12px; overflow-x: auto; }
+        .tab { flex: 1; min-width: 80px; padding: 10px 5px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; color: #94a3b8; white-space: nowrap; }
+        .tab.active { background: var(--accent); color: #000; }
+
+        .container { padding: 0 15px; max-width: 600px; margin: auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+
+        /* Cards */
+        .card { background: var(--secondary); margin-bottom: 12px; padding: 16px; border-radius: 15px; border: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; position: relative; }
+        
+        /* Schedule Match Card */
+        .match-card { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #3b82f6; }
+        .match-date { font-size: 11px; color: #94a3b8; font-weight: bold; }
+        .match-teams { font-size: 16px; font-weight: 800; margin: 5px 0; color: #fff; }
+        .match-venue { font-size: 10px; color: #64748b; }
+
+        .btn-set { background: #3b82f6; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; }
+
+        /* Floating WA */
+        .floating-wa { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 15px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 5px 20px rgba(0,0,0,0.4); z-index: 100; border: 2px solid white; }
+        
+        #admin-panel { background: #fff; color: #000; padding: 20px; border-radius: 15px; margin-top: 20px; display: none; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div id="live-date">Loading...</div>
+    <div id="live-clock">00:00:00</div>
+</div>
+
+<div class="header">
+    <button class="admin-login-btn" onclick="adminLogin()">ADMIN</button>
+    <div class="logo">LINE GURU</div>
+    <div id="match-title" style="font-weight:bold; color:var(--accent); margin-top:5px; font-size:20px;">IPL 2026</div>
+    <div id="prize-info" style="font-size:12px; color:#fff; margin-top:8px; font-weight:bold;">ROUND 1 | PRIZE: ₹1300</div>
+</div>
+
+<div class="tabs">
+    <div class="tab active" onclick="switchTab('teams', this)">CONTEST</div>
+    <div class="tab" onclick="switchTab('entries', this)">ENTRIES</div>
+    <div class="tab" onclick="switchTab('schedule', this)">SCHEDULE 📅</div>
+    <div class="tab" onclick="switchTab('history', this)">HISTORY</div>
+</div>
+
+<div class="container">
+    <!-- Section 1: Contest -->
+    <div id="teams-section" class="content-section active">
+        <div id="team-list"></div>
+    </div>
+
+    <!-- Section 2: Entries -->
+    <div id="entries-section" class="content-section">
+        <div id="entry-list"></div>
+    </div>
+
+    <!-- Section 3: Schedule -->
+    <div id="schedule-section" class="content-section">
+        <h3 style="color:var(--accent); margin-bottom:15px;">IPL 2026 Schedule</h3>
+        <div id="match-schedule-list">
+            <!-- Matches will be listed here -->
+        </div>
+        <a href="https://www.cricbuzz.com/cricket-series/9241/indian-premier-league-2026/matches" target="_blank" style="display:block; text-align:center; color:var(--accent); margin-top:20px; text-decoration:none; font-weight:bold;">View Full Schedule on Cricbuzz ↗</a>
+    </div>
+
+    <!-- Section 4: History -->
+    <div id="history-section" class="content-section">
+        <h4 style="color:var(--accent);">Past Rounds:</h4>
+        <div id="history-list"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel">
+        <h3>Admin Settings</h3>
+        <div style="border:1px solid #ddd; padding:10px; border-radius:10px; margin-bottom:15px;">
+            <h4>Active Match</h4>
+            <input type="text" id="adm-tA" placeholder="Team A">
+            <input type="text" id="adm-tB" placeholder="Team B">
+            <button onclick="saveMatch()" style="width:100%; padding:10px; background:#3b82f6; color:white; border:none; border-radius:5px; font-weight:bold;">Update Now</button>
+        </div>
+        <div id="admin-runs" style="border:1px solid #ddd; padding:10px; border-radius:10px; margin-bottom:15px;">
+            <h4>Live Runs</h4>
+            <div id="run-inputs-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+            <button onclick="updateRuns()" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:5px; font-weight:bold; margin-top:10px;">Update Runs</button>
+        </div>
+        <div style="background:#fff8e1; padding:10px; border-radius:10px;">
+            <h4>Set Winner & Next Round</h4>
+            <select id="win1" style="width:100%; padding:10px; margin-bottom:10px;"></select>
+            <button onclick="declareWinnerAndReset()" style="width:100%; padding:12px; background:var(--accent); border:none; border-radius:5px; font-weight:bold;">DECLARE WINNER & RESET 🏆</button>
+        </div>
+        <button onclick="adminLogout()" style="width:100%; margin-top:10px; padding:8px; background:#64748b; color:white; border:none; border-radius:5px;">Close</button>
+    </div>
+</div>
+
+<a href="https://wa.me/917567470149" class="floating-wa" target="_blank">Support</a>
+
+<script>
+    // System Data
+    let state = {
+        current: {
+            round: JSON.parse(localStorage.getItem('lg_v7_round')) || 1,
+            entries: JSON.parse(localStorage.getItem('lg_v7_entries')) || [],
+            runs: JSON.parse(localStorage.getItem('lg_v7_runs')) || {a1:0, a2:0, a3:0, b1:0, b2:0, b3:0},
+            names: JSON.parse(localStorage.getItem('lg_v7_names')) || {a: 'CSK', b: 'MI'},
+            money: {prize: 1300, entry: 100}
+        },
+        history: JSON.parse(localStorage.getItem('lg_v7_history')) || [],
+        isAdmin: false
+    };
+
+    // Static Schedule Data (Update this as per Cricbuzz)
+    const iplSchedule = [
+        { date: "March 22, 2026 - 07:30 PM", tA: "CSK", tB: "RCB", venue: "MA Chidambaram Stadium, Chennai" },
+        { date: "March 23, 2026 - 03:30 PM", tA: "PBKS", tB: "DC", venue: "PCA Stadium, Mohali" },
+        { date: "March 23, 2026 - 07:30 PM", tA: "KKR", tB: "SRH", venue: "Eden Gardens, Kolkata" },
+        { date: "March 24, 2026 - 07:30 PM", tA: "RR", tB: "LSG", venue: "Sawai Mansingh Stadium, Jaipur" },
+        { date: "March 24, 2026 - 07:30 PM", tA: "GT", tB: "MI", venue: "Narendra Modi Stadium, Ahmedabad" }
+    ];
+
+    window.onload = () => {
+        updateTime();
+        setInterval(updateTime, 1000);
+        render();
+        initAdmin();
+    };
+
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('live-date').innerText = now.toLocaleDateString('gu-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+    }
+
+    function render() {
+        document.getElementById('match-title').innerText = `${state.current.names.a} VS ${state.current.names.b}`;
+        document.getElementById('prize-info').innerText = `ROUND ${state.current.round} | PRIZE: ₹${state.current.money.prize}`;
+        
+        // Contest Teams
+        const tList = document.getElementById('team-list');
+        tList.innerHTML = "";
+        const configs = getConfigs(state.current.names);
+        configs.forEach(t => {
+            const isSold = state.current.entries.some(e => e.team === t.name);
+            const totalRuns = (parseInt(state.current.runs[t.keys[0]]) + parseInt(state.current.runs[t.keys[1]])) || 0;
+            tList.innerHTML += `
+                <div class="card">
+                    <div style="display:flex; align-items:center;">
+                        <div style="background:#334155; color:var(--accent); width:30px; height:30px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-weight:bold; margin-right:12px;">${t.id}</div>
+                        <div><b>${t.name}</b><br><small style="color:${isSold?'var(--danger)':'var(--success)'}">${isSold?'SOLD OUT':'AVAILABLE'}</small></div>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        ${totalRuns > 0 ? `<div style="color:var(--accent); font-weight:900; font-size:20px; margin-right:10px;">${totalRuns}</div>` : ''}
+                        <button onclick="join('${t.name}')" style="background:${isSold?'#475569':'var(--success)'}; color:white; border:none; padding:8px 15px; border-radius:5px; font-weight:bold;" ${isSold?'disabled':''}>${isSold?'FULL':'JOIN'}</button>
+                    </div>
+                </div>`;
+        });
+
+        // Entries
+        const eList = document.getElementById('entry-list');
+        eList.innerHTML = state.current.entries.length ? "" : "<p style='text-align:center;'>No entries.</p>";
+        state.current.entries.forEach(e => {
+            eList.innerHTML += `<div class="card"><div><b>${e.name}</b><br><small>${e.team}</small></div><div style="color:var(--success); font-size:10px; font-weight:bold;">Verified ✅</div></div>`;
+        });
+
+        // Schedule List
+        const sList = document.getElementById('match-schedule-list');
+        sList.innerHTML = "";
+        iplSchedule.forEach(m => {
+            sList.innerHTML += `
+                <div class="match-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div>
+                            <div class="match-date">${m.date}</div>
+                            <div class="match-teams">${m.tA} <span style="color:var(--accent); font-size:12px;">vs</span> ${m.tB}</div>
+                            <div class="match-venue">${m.venue}</div>
+                        </div>
+                        ${state.isAdmin ? `<button class="btn-set" onclick="setMatchFromSchedule('${m.tA}', '${m.tB}')">Set Match</button>` : ''}
+                    </div>
+                </div>`;
+        });
+
+        // History
+        const hList = document.getElementById('history-list');
+        hList.innerHTML = state.history.length ? "" : "<p style='text-align:center;'>No history.</p>";
+        state.history.slice().reverse().forEach(h => {
+            hList.innerHTML += `<div class="card"><div><b>Round ${h.round}</b><br><small>${h.names.a} v ${h.names.b}</small></div><div style="color:var(--accent); font-weight:bold;">Winner Team ${h.winners.join(',')}</div></div>`;
+        });
+
+        document.getElementById('admin-panel').style.display = state.isAdmin ? 'block' : 'none';
+    }
+
+    function setMatchFromSchedule(tA, tB) {
+        if(confirm(`Set ${tA} vs ${tB} as current match?`)) {
+            state.current.names = { a: tA, b: tB };
+            save(); render(); initAdmin();
+            alert("Match set successfully!");
+        }
+    }
+
+    function declareWinnerAndReset() {
+        const win = document.getElementById('win1').value;
+        if(!win) return alert("Select Winner!");
+        if(confirm("Confirm Winner & Start Next Round?")) {
+            const archive = JSON.parse(JSON.stringify(state.current));
+            archive.winners = [win];
+            state.history.push(archive);
+            state.current.round++;
+            state.current.entries = [];
+            state.current.runs = {a1:0, a2:0, a3:0, b1:0, b2:0, b3:0};
+            save(); render();
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+    }
+
+    function switchTab(id, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(id + '-section').classList.add('active');
+    }
+
+    function saveMatch() {
+        state.current.names.a = document.getElementById('adm-tA').value.toUpperCase();
+        state.current.names.b = document.getElementById('adm-tB').value.toUpperCase();
+        save(); render(); alert("Match updated!");
+    }
+
+    function updateRuns() {
+        state.current.runs = {
+            a1: document.getElementById('r-a1').value, b1: document.getElementById('r-b1').value,
+            a2: document.getElementById('r-a2').value, b2: document.getElementById('r-b2').value,
+            a3: document.getElementById('r-a3').value, b3: document.getElementById('r-b3').value
+        };
+        save(); render(); alert("Runs updated!");
+    }
+
+    function join(t) {
+        const n = prompt("નામ:");
+        if(!n) return;
+        state.current.entries.push({id: Date.now(), name: n, team: t});
+        save(); render();
+        window.open(`https://wa.me/918690447858?text=New Entry: ${n} for ${t} in Round ${state.current.round}`, '_blank');
+    }
+
+    function save() {
+        localStorage.setItem('lg_v7_round', JSON.stringify(state.current.round));
+        localStorage.setItem('lg_v7_entries', JSON.stringify(state.current.entries));
+        localStorage.setItem('lg_v7_runs', JSON.stringify(state.current.runs));
+        localStorage.setItem('lg_v7_names', JSON.stringify(state.current.names));
+        localStorage.setItem('lg_v7_history', JSON.stringify(state.history));
+    }
+
+    function getConfigs(names) {
+        const {a, b} = names;
+        return [
+            { id: 1, name: `${a}1 + ${b}3`, keys: ['a1', 'b3'] },
+            { id: 2, name: `${a}1 + ${b}2`, keys: ['a1', 'b2'] },
+            { id: 3, name: `${a}1 + ${b}1`, keys: ['a1', 'b1'] },
+            { id: 4, name: `${a}2 + ${b}1`, keys: ['a2', 'b1'] },
+            { id: 5, name: `${a}2 + ${b}2`, keys: ['a2', 'b2'] },
+            { id: 6, name: `${a}2 + ${b}3`, keys: ['a2', 'b3'] },
+            { id: 7, name: `${a}3 + ${b}3`, keys: ['a3', 'b3'] },
+            { id: 8, name: `${a}3 + ${b}2`, keys: ['a3', 'b2'] },
+            { id: 9, name: `${a}3 + ${b}1`, keys: ['a3', 'b1'] },
+            { id: 10, name: `${a}1 + ${a}2`, keys: ['a1', 'a2'] },
+            { id: 11, name: `${a}2 + ${a}3`, keys: ['a2', 'a3'] },
+            { id: 12, name: `${a}3 + ${a}1`, keys: ['a3', 'a1'] },
+            { id: 13, name: `${b}1 + ${b}2`, keys: ['b1', 'b2'] },
+            { id: 14, name: `${b}2 + ${b}3`, keys: ['b2', 'b3'] },
+            { id: 15, name: `${b}3 + ${b}1`, keys: ['b3', 'b1'] }
+        ];
+    }
+
+    function initAdmin() {
+        document.getElementById('adm-tA').value = state.current.names.a;
+        document.getElementById('adm-tB').value = state.current.names.b;
+        const grid = document.getElementById('run-inputs-grid');
+        grid.innerHTML = `
+            <div><small>${state.current.names.a} 1</small><input type="number" id="r-a1" value="${state.current.runs.a1}"></div>
+            <div><small>${state.current.names.b} 1</small><input type="number" id="r-b1" value="${state.current.runs.b1}"></div>
+            <div><small>${state.current.names.a} 2</small><input type="number" id="r-a2" value="${state.current.runs.a2}"></div>
+            <div><small>${state.current.names.b} 2</small><input type="number" id="r-b2" value="${state.current.runs.b2}"></div>
+            <div><small>${state.current.names.a} 3</small><input type="number" id="r-a3" value="${state.current.runs.a3}"></div>
+            <div><small>${state.current.names.b} 3</small><input type="number" id="r-b3" value="${state.current.runs.b3}"></div>
+        `;
+        const sel = document.getElementById('win1');
+        sel.innerHTML = '<option value="">Winner?</option>';
+        for(let i=1; i<=15; i++) sel.innerHTML += `<option value="${i}">Team ${i}</option>`;
+    }
+
+    function adminLogin() { if(prompt("Password:") === "BHAVU9686") { state.isAdmin = true; render(); } }
+    function adminLogout() { state.isAdmin = false; render(); }
+</script>
+</body>
+</html>
